@@ -1,0 +1,2 @@
+# The CSP in recipes/auth/link/index.html pins the inline script by hash: keep LF everywhere.
+* text=auto eol=lf
