@@ -32,10 +32,10 @@ gh api -X PUT repos/lumeforgelabs/links/pages -f "source[branch]=main" -f "sourc
 
 GitHub rebuilds the site in about a minute after each switch.
 
-**Full shutdown** (nothing published). Order matters: while `links.lumeforgelabs.com` still points to GitHub but no repository claims it, anyone could claim it for their own Pages site and receive sign-in tokens (subdomain takeover).
+**Full shutdown** (nothing published). Order matters:
 
-1. INWX: delete the `links` CNAME record.
-2. Then: `gh api -X DELETE repos/lumeforgelabs/links/pages`
-3. Remove `https://links.lumeforgelabs.com/recipes/auth/link` from the Supabase redirect allow-list in `lumeforgelabs/recipes` (`supabase/config.toml`, then `supabase config push`), or the app keeps sending links to it.
+1. Remove `https://links.lumeforgelabs.com/recipes/auth/link` from the Supabase redirect allow-list in `lumeforgelabs/recipes` (`supabase/config.toml`, then `supabase config push`), so no new email links to the page. Do this first: `*.lumeforgelabs.com` has a wildcard record at INWX, so once the CNAME is gone the address resolves to INWX's default server, and tokens in old links would go there.
+2. INWX: delete the `links` CNAME record (and save).
+3. Wait until all INWX nameservers stop serving it (`nslookup -type=CNAME links.lumeforgelabs.com ns.inwx.de`, also `ns2.inwx.de` and `ns3.inwx.eu`), then: `gh api -X DELETE repos/lumeforgelabs/links/pages`. Never the other way round: while the DNS record points to GitHub but no repository claims the domain, anyone could claim it for their own Pages site and receive sign-in tokens (subdomain takeover).
 
 Verifying `lumeforgelabs.com` for GitHub Pages in the organization settings blocks such takeovers in any case.
