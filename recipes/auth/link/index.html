@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The sign-in token is in this page's URL: never send it anywhere (no referrer, no external
+         resources, no tracking). This page only hands the token to the app; it never signs in. -->
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-QQ46cok+HoYnJw8SZEfGvJeeAfskq/g8VLJzHcaHrEU='; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Recipes · Sign in</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f5f4;
+        --card: #ffffff;
+        --ink: #1c1917;
+        --muted: #57534e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c1917;
+          --card: #292524;
+          --ink: #fafaf9;
+          --muted: #a8a29e;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      }
+      main {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 440px;
+        margin: 16px;
+        padding: 32px;
+        background: var(--card);
+        border-radius: 12px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 22px;
+        line-height: 28px;
+      }
+      p {
+        margin: 0 0 16px;
+        font-size: 16px;
+        line-height: 24px;
+        color: var(--muted);
+      }
+      a.button {
+        display: inline-block;
+        margin: 8px 0 16px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: var(--bg);
+        font-size: 16px;
+        text-decoration: none;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 id="title">Sign in</h1>
+      <p id="body">Enter the 8-digit code from the email in the app.</p>
+      <a id="open" class="button" href="#" hidden>Open in the app</a>
+      <p id="hint" hidden>If the app doesn't open, enter the 8-digit code from the email in the app.</p>
+    </main>
+    <noscript>
+      <p>Enter the 8-digit code from the email in the app.</p>
+    </noscript>
+    <script>
+      (function () {
+        var texts = {
+          en: {
+            title: 'Sign in',
+            phone: 'Tap the button to finish signing in in the app.',
+            open: 'Open in the app',
+            hint: "If the app doesn't open, enter the 8-digit code from the email in the app.",
+            computerTitle: 'Open the app on your phone',
+            computer:
+              'This link only works on the phone with the app. Enter the 8-digit code from the email in the app instead.',
+            invalidTitle: 'This link is incomplete',
+            invalid: 'Enter the 8-digit code from the email in the app, or request a new email.',
+          },
+          de: {
+            title: 'Anmelden',
+            phone: 'Tippe auf den Button, um die Anmeldung in der App abzuschließen.',
+            open: 'In der App öffnen',
+            hint: 'Wenn sich die App nicht öffnet, gib den 8-stelligen Code aus der E-Mail in der App ein.',
+            computerTitle: 'Öffne die App auf deinem Handy',
+            computer:
+              'Dieser Link funktioniert nur auf dem Handy mit der App. Gib stattdessen den 8-stelligen Code aus der E-Mail in der App ein.',
+            invalidTitle: 'Dieser Link ist unvollständig',
+            invalid: 'Gib den 8-stelligen Code aus der E-Mail in der App ein oder fordere eine neue E-Mail an.',
+          },
+        };
+        var lang = (navigator.language || 'en').toLowerCase().indexOf('de') === 0 ? 'de' : 'en';
+        var t = texts[lang];
+        document.documentElement.lang = lang;
+
+        var params = new URLSearchParams(location.search);
+        var tokenHash = params.get('token_hash') || '';
+        var type = params.get('type') || '';
+        // Supabase token hashes are hex. Anything else is not passed on.
+        var valid = /^[a-f0-9]{16,128}$/.test(tokenHash) && type === 'email';
+        var phone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        var title = document.getElementById('title');
+        var body = document.getElementById('body');
+        var open = document.getElementById('open');
+        var hint = document.getElementById('hint');
+
+        if (!valid) {
+          title.textContent = t.invalidTitle;
+          body.textContent = t.invalid;
+        } else if (!phone) {
+          title.textContent = t.computerTitle;
+          body.textContent = t.computer;
+        } else {
+          title.textContent = t.title;
+          body.textContent = t.phone;
+          // Only a tap opens the app: a mail scanner loading this page never reaches the app,
+          // so the sign-in is not used up.
+          open.href =
+            'recipes://auth/link?token_hash=' + encodeURIComponent(tokenHash) + '&type=email';
+          open.textContent = t.open;
+          open.hidden = false;
+          hint.textContent = t.hint;
+          hint.hidden = false;
+        }
+        // Drop the token from the address bar and history once it has been read.
+        history.replaceState(null, '', location.pathname);
+      })();
+    </script>
+  </body>
+</html>
